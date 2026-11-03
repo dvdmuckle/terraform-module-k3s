@@ -1,14 +1,14 @@
-// Fetch the last version of k3s
+// Resolve the latest published non-prerelease version when requested
 data "http" "k3s_version" {
-  url = "https://update.k3s.io/v1-release/channels"
+  count = var.k3s_version == "latest" ? 1 : 0
+
+  url = "https://api.github.com/repos/k3s-io/k3s/releases/latest"
 }
 
-// Fetch the k3s installation script
 data "http" "k3s_installer" {
-  url = "https://raw.githubusercontent.com/rancher/k3s/${jsondecode(data.http.k3s_version.response_body).data[1].latest}/install.sh"
+  url = "https://raw.githubusercontent.com/k3s-io/k3s/${urlencode(local.k3s_version)}/install.sh"
 }
 
 locals {
-  // Use the fetched version if 'lastest' is specified
-  k3s_version = var.k3s_version == "latest" ? jsondecode(data.http.k3s_version.response_body).data[1].latest : var.k3s_version
+  k3s_version = var.k3s_version == "latest" ? jsondecode(data.http.k3s_version[0].response_body).tag_name : var.k3s_version
 }
